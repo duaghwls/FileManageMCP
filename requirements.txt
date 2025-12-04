@@ -2,7 +2,7 @@
 # Python 3.13+
 
 # MCP SDK - Model Context Protocol 공식 라이브러리
-mcp>=1.0.0
+fastmcp>=1.0.0
 
 # Pydantic - 데이터 검증 및 설정 관리
 pydantic>=2.0.0

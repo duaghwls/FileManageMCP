@@ -33,7 +33,7 @@ Windows용 로컬 MCP 서버로, LLM이 파일 시스템을 정리할 수 있도
 
 ```bash
 # 프로젝트 디렉토리로 이동
-cd C:\Projects\03_FileManageMCP
+cd C:\{your_path}\FileManageMCP
 
 # uv로 의존성 설치 및 실행
 uv run python server.py
@@ -62,11 +62,11 @@ python server.py
   "mcpServers": {
     "file-organization-agent": {
       "command": "uv",
-      "args": ["run", "python", "server.py"],
-      "cwd": "C:\\Projects\\03_FileManageMCP"
-    }
+      "args": ["run", "--directory", "{your_path}\\FileManageMCP", "python", "server.py"]
+    } 
   }
 }
+
 ```
 
 ### Claude Desktop 설정 (`claude_desktop_config.json`)
@@ -79,7 +79,7 @@ Windows: `%APPDATA%\Claude\claude_desktop_config.json`
     "file-organization-agent": {
       "command": "uv",
       "args": ["run", "python", "server.py"],
-      "cwd": "C:\\Projects\\03_FileManageMCP"
+      "cwd": "C:\\{your_path}\\FileManageMCP"
     }
   }
 }
@@ -92,7 +92,7 @@ Windows: `%APPDATA%\Claude\claude_desktop_config.json`
   "mcpServers": {
     "file-organization-agent": {
       "command": "python",
-      "args": ["C:\\Projects\\03_FileManageMCP\\server.py"],
+      "args": ["C:\\{your_path}\\FileManageMCP\\server.py"],
       "env": {
         "MCP_FILE_AGENT_ROOT": "D:\\MyDocuments"
       }
@@ -214,7 +214,7 @@ AI:
 ### MCP 연결 실패
 - Python 경로가 올바른지 확인
 - `uv` 또는 `pip`으로 의존성 설치 확인
-- `mcp` 패키지 버전 확인: `pip show mcp`
+- `mcp` 패키지 버전 확인: `pip show fastmcp`
 
 ## 📄 라이선스
 
