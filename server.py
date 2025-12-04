@@ -275,14 +275,14 @@ def tool_batch_rename_with_date(directory: str, use_modified: bool = True) -> st
 def get_organization_rules() -> str:
     """파일 정리 규칙 문서를 반환합니다."""
     return """
-# 📂 파일 정리 규칙
+# 파일 정리 규칙
 
 ## 2가지 절대 규칙
 
 1. **5단계 규칙**: 디렉토리 깊이는 최대 5단계까지만 허용
 2. **번호 체계**: 폴더는 00~99 접두사 사용 (예: `01_Project`). 99는 Archive 용도로 예약
 
-## 🗂️ 폴더 구조 예시
+## 폴더 구조 예시
 
 ### 개인 폴더
 - 01_Gallery (갤러리/사진)
@@ -298,7 +298,7 @@ def get_organization_rules() -> str:
 - Template (템플릿 파일)
 - Quick Share (빠른 공유용 임시 폴더)
 
-## 📝 파일 명명 규칙
+## 파일 명명 규칙
 
 1. **시간순 정렬 파일**: `YYMMDD_파일명` (예: `251202_회의록`)
    - 파일의 생성일 또는 수정일을 기준으로 함
@@ -309,7 +309,7 @@ def get_organization_rules() -> str:
    - 'Final', '최종', '진짜최종' 금지!
    - 예: `251202_프로젝트계획서_v1.0.docx`
 
-## ⚠️ 금지 사항
+## 금지 사항
 
 - 시스템 폴더 접근 금지 (Windows, Program Files 등)
 - .git 폴더 수정 금지
@@ -321,7 +321,7 @@ def get_organization_rules() -> str:
 def get_workflow_guide() -> str:
     """정리 작업 워크플로우 가이드를 반환합니다."""
     return """
-# 🔄 파일 정리 워크플로우
+# 파일 정리 워크플로우
 
 ## 1단계: 준비
 1. `tool_configure_workspace`로 작업 영역 설정
