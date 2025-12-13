@@ -9,6 +9,22 @@ from pathlib import Path
 from datetime import datetime
 from typing import Optional, Tuple
 from dataclasses import dataclass
+import base64
+from io import BytesIO
+
+# Optional: python-docx for .docx files
+try:
+    from docx import Document as DocxDocument
+    DOCX_AVAILABLE = True
+except ImportError:
+    DOCX_AVAILABLE = False
+
+# Optional: PyPDF2 for .pdf files
+try:
+    from PyPDF2 import PdfReader
+    PDF_AVAILABLE = True
+except ImportError:
+    PDF_AVAILABLE = False
 
 
 @dataclass
@@ -364,3 +380,242 @@ def sanitize_filename(filename: str) -> str:
     
     return filename
 
+
+# ============================================================================
+# 고급 파일 분석 유틸리티 (Enhanced File Analysis Utilities)
+# ============================================================================
+
+
+def read_docx_content(path: Path, max_length: int = 1000) -> Tuple[str, bool]:
+    """
+    Word 문서(.docx)의 텍스트 내용을 읽습니다.
+    
+    Args:
+        path: 읽을 파일 경로
+        max_length: 최대 읽을 글자 수
+        
+    Returns:
+        (내용, 성공 여부)
+    """
+    if not DOCX_AVAILABLE:
+        return "[ERROR] python-docx 라이브러리가 설치되지 않았습니다. 'pip install python-docx' 명령으로 설치하세요.", False
+    
+    try:
+        doc = DocxDocument(str(path))
+        full_text = []
+        for para in doc.paragraphs:
+            full_text.append(para.text)
+            if len('\n'.join(full_text)) >= max_length:
+                break
+        
+        content = '\n'.join(full_text)[:max_length]
+        return content, True
+    except Exception as e:
+        return f"[ERROR] Word 문서 읽기 오류: {str(e)}", False
+
+
+def read_pdf_content(path: Path, max_length: int = 1000) -> Tuple[str, bool]:
+    """
+    PDF 파일의 텍스트 내용을 읽습니다.
+    
+    Args:
+        path: 읽을 파일 경로
+        max_length: 최대 읽을 글자 수
+        
+    Returns:
+        (내용, 성공 여부)
+    """
+    if not PDF_AVAILABLE:
+        return "[ERROR] PyPDF2 라이브러리가 설치되지 않았습니다. 'pip install PyPDF2' 명령으로 설치하세요.", False
+    
+    try:
+        reader = PdfReader(str(path))
+        full_text = []
+        
+        for page in reader.pages:
+            text = page.extract_text()
+            if text:
+                full_text.append(text)
+            if len('\n'.join(full_text)) >= max_length:
+                break
+        
+        content = '\n'.join(full_text)[:max_length]
+        return content, True
+    except Exception as e:
+        return f"[ERROR] PDF 읽기 오류: {str(e)}", False
+
+
+def get_readable_extensions() -> set:
+    """텍스트로 읽을 수 있는 파일 확장자 목록을 반환합니다."""
+    return {
+        # 코드/텍스트 파일
+        '.py', '.txt', '.md', '.js', '.ts', '.jsx', '.tsx',
+        '.html', '.css', '.scss', '.json', '.xml', '.yaml', '.yml',
+        '.java', '.c', '.cpp', '.h', '.hpp', '.cs', '.go', '.rs',
+        '.sh', '.bat', '.ps1', '.sql', '.r', '.rb', '.php',
+        '.ini', '.cfg', '.conf', '.log', '.csv',
+        # 문서 파일 (별도 처리 필요)
+        '.docx', '.pdf',
+    }
+
+
+def encode_image_to_base64(path: Path, max_size: int = 512) -> Tuple[str, str, bool]:
+    """
+    이미지를 Base64로 인코딩합니다.
+    이미지가 크면 리사이즈합니다.
+    
+    Args:
+        path: 이미지 파일 경로
+        max_size: 최대 가로/세로 픽셀 수
+        
+    Returns:
+        (base64_data, mime_type, 성공 여부)
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        return "", "", False
+    
+    # MIME 타입 결정
+    ext = path.suffix.lower()
+    mime_types = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+        '.bmp': 'image/bmp',
+    }
+    
+    mime_type = mime_types.get(ext, 'image/jpeg')
+    
+    try:
+        with Image.open(path) as img:
+            # RGBA를 RGB로 변환 (JPEG 저장을 위해)
+            if img.mode == 'RGBA' and mime_type == 'image/jpeg':
+                img = img.convert('RGB')
+            
+            # 리사이즈 필요 여부 확인
+            if max(img.size) > max_size:
+                ratio = max_size / max(img.size)
+                new_size = (int(img.size[0] * ratio), int(img.size[1] * ratio))
+                img = img.resize(new_size, Image.Resampling.LANCZOS)
+            
+            # Base64 인코딩
+            buffer = BytesIO()
+            save_format = 'JPEG' if ext in ['.jpg', '.jpeg'] else ext[1:].upper()
+            if save_format == 'JPG':
+                save_format = 'JPEG'
+            img.save(buffer, format=save_format)
+            
+            base64_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            return base64_data, mime_type, True
+            
+    except Exception as e:
+        return f"[ERROR] 이미지 인코딩 오류: {str(e)}", "", False
+
+
+def get_image_extensions() -> set:
+    """이미지 파일 확장자 목록을 반환합니다."""
+    return {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'}
+
+
+def analyze_filename_patterns(filenames: list[str]) -> dict:
+    """
+    파일명 패턴을 분석하여 관련성 정보를 반환합니다.
+    
+    Args:
+        filenames: 분석할 파일명 목록
+        
+    Returns:
+        {
+            'common_prefixes': ['project_', 'report_'],
+            'common_keywords': ['2024', 'final'],
+            'extension_groups': {'.py': ['a.py', 'b.py'], '.txt': ['c.txt']},
+        }
+    """
+    from collections import Counter
+    
+    result = {
+        'common_prefixes': [],
+        'common_keywords': [],
+        'extension_groups': {},
+    }
+    
+    if not filenames:
+        return result
+    
+    # 확장자별 그룹핑
+    for fname in filenames:
+        path = Path(fname)
+        ext = path.suffix.lower()
+        if ext not in result['extension_groups']:
+            result['extension_groups'][ext] = []
+        result['extension_groups'][ext].append(fname)
+    
+    # 공통 접두사 찾기 (언더스코어나 하이픈 기준)
+    prefix_counter = Counter()
+    for fname in filenames:
+        stem = Path(fname).stem
+        # 언더스코어 또는 하이픈으로 분리
+        parts = re.split(r'[_\-\s]', stem)
+        if len(parts) > 1:
+            prefix_counter[parts[0]] += 1
+    
+    # 2번 이상 나타나는 접두사
+    result['common_prefixes'] = [prefix for prefix, count in prefix_counter.items() if count >= 2]
+    
+    # 공통 키워드 찾기
+    keyword_counter = Counter()
+    for fname in filenames:
+        stem = Path(fname).stem.lower()
+        words = re.split(r'[_\-\s]', stem)
+        for word in words:
+            if len(word) >= 3:  # 3글자 이상만
+                keyword_counter[word] += 1
+    
+    # 2번 이상 나타나는 키워드
+    result['common_keywords'] = [kw for kw, count in keyword_counter.items() if count >= 2]
+    
+    return result
+
+
+def is_random_filename(filename: str) -> bool:
+    """
+    파일명이 무작위 문자열인지 판단합니다.
+    
+    Args:
+        filename: 확인할 파일명 (확장자 제외)
+        
+    Returns:
+        True if likely random, False otherwise
+    """
+    stem = Path(filename).stem
+    
+    # 이미 날짜 접두사가 있는 파일은 정리된 파일로 간주
+    if re.match(r'^\d{6}_', stem):
+        return False
+    
+    # 너무 짧은 이름은 무작위로 간주
+    if len(stem) <= 3:
+        return True
+    
+    # 알파벳+숫자만으로 구성된 경우 (단어 구분 없음)
+    if re.match(r'^[a-zA-Z0-9]+$', stem):
+        # 연속된 숫자가 많으면 무작위일 가능성
+        if len(re.findall(r'\d', stem)) > len(stem) * 0.5:
+            return True
+        # 모음이 거의 없으면 무작위일 가능성 (자연어가 아님)
+        vowels = len(re.findall(r'[aeiouAEIOU]', stem))
+        if vowels < len(stem) * 0.15:
+            return True
+    
+    # 해시값 같은 패턴 (8자 이상 영숫자 조합)
+    if re.match(r'^[a-f0-9]{8,}$', stem, re.IGNORECASE):
+        return True
+    
+    # UUID 패턴
+    if re.match(r'^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$', stem, re.IGNORECASE):
+        return True
+    
+    return False

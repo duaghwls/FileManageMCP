@@ -16,3 +16,9 @@ Pillow>=10.0.0
 # python-dateutil - 날짜 파싱 유틸리티
 python-dateutil>=2.8.0
 
+# Optional: Enhanced file content analysis
+# python-docx - Word 문서(.docx) 텍스트 추출
+python-docx>=0.8.11
+
+# PyPDF2 - PDF 파일 텍스트 추출
+PyPDF2>=3.0.0

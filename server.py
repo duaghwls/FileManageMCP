@@ -28,6 +28,13 @@ from tools import (
     rename_file,
     create_folder,
     batch_rename_with_date,
+    # 고급 분석 및 정리 도구 (Enhanced)
+    suggest_filename_from_content,
+    get_image_for_analysis,
+    analyze_file_relationships,
+    rename_with_suggestion,
+    group_files_into_folder,
+    find_files_needing_rename,
 )
 
 
@@ -264,6 +271,153 @@ def tool_batch_rename_with_date(directory: str, use_modified: bool = True) -> st
         작업 결과 (Dry Run 시 시뮬레이션 결과)
     """
     return batch_rename_with_date(directory, use_modified)
+
+
+# ============================================================================
+# 고급 분석 및 정리 도구 등록 (Enhanced Analysis & Organization Tools)
+# ============================================================================
+
+
+@mcp.tool()
+def tool_find_files_needing_rename(directory: str) -> str:
+    """
+    디렉토리 내에서 이름 변경이 필요한 파일들(무작위 파일명)을 찾습니다.
+    분석 가능한 텍스트/이미지 파일만 필터링하여 반환합니다.
+
+    이 도구로 먼저 대상 파일을 파악한 후:
+    - 텍스트 파일: tool_suggest_filename_from_content 사용
+    - 이미지 파일: tool_get_image_for_analysis 사용
+
+    Args:
+        directory: 탐색할 디렉토리 경로
+
+    Returns:
+        이름 변경이 필요한 파일 목록 및 사용할 도구 안내
+    """
+    return find_files_needing_rename(directory)
+
+
+@mcp.tool()
+def tool_suggest_filename_from_content(path: str, max_content_length: int = 1000) -> str:
+    """
+    텍스트/문서 파일의 내용을 읽어 LLM이 적절한 이름을 제안할 수 있도록
+    파일 정보와 내용을 반환합니다.
+
+    지원 파일: .py, .txt, .md, .js, .json, .html, .css, .docx, .pdf 등
+
+    사용 워크플로우:
+    1. 이 도구로 파일 내용 확인
+    2. 내용을 바탕으로 적절한 파일명 결정
+    3. tool_rename_with_suggestion으로 이름 변경
+
+    Args:
+        path: 분석할 파일 경로
+        max_content_length: 최대 읽을 글자 수 (기본: 1000)
+
+    Returns:
+        파일 정보 및 내용 스니펫
+    """
+    return suggest_filename_from_content(path, max_content_length)
+
+
+@mcp.tool()
+def tool_get_image_for_analysis(path: str, max_size: int = 512) -> dict:
+    """
+    이미지 파일을 LLM Vision이 분석할 수 있도록 Base64로 인코딩하여 반환합니다.
+    MCP 프로토콜의 type: "image" 형식으로 반환됩니다.
+
+    지원 파일: .jpg, .jpeg, .png, .gif, .webp, .bmp
+
+    사용 워크플로우:
+    1. 이 도구로 이미지 데이터 획득
+    2. Vision API로 이미지 내용 분석
+    3. 내용을 바탕으로 적절한 파일명 결정
+    4. tool_rename_with_suggestion으로 이름 변경
+
+    Args:
+        path: 이미지 파일 경로
+        max_size: 이미지 최대 크기 (기본: 512px, 큰 이미지는 리사이즈)
+
+    Returns:
+        MCP 이미지 content (type: "image", data: base64, mimeType: ...)
+    """
+    return get_image_for_analysis(path, max_size)
+
+
+@mcp.tool()
+def tool_analyze_file_relationships(directory: str) -> str:
+    """
+    디렉토리 내 파일들의 관계를 분석하여 그룹핑 제안을 위한 정보를 반환합니다.
+
+    분석 항목:
+    - 확장자별 파일 그룹
+    - 공통 접두사를 가진 파일들
+    - 공통 키워드
+    - 같은 날짜에 수정된 파일들
+    - 무작위 파일명 목록
+
+    이 분석 결과를 바탕으로 tool_group_files_into_folder로 파일들을 정리할 수 있습니다.
+
+    Args:
+        directory: 분석할 디렉토리 경로
+
+    Returns:
+        파일 관계 분석 결과 및 그룹핑 제안
+    """
+    return analyze_file_relationships(directory)
+
+
+@mcp.tool()
+def tool_rename_with_suggestion(
+    path: str, suggested_name: str, keep_extension: bool = True
+) -> str:
+    """
+    LLM이 제안한 이름으로 파일명을 변경합니다.
+
+    명명 규칙:
+    - 파일명 형식: YYMMDD_설명적인이름.확장자
+    - 예: 241213_프로젝트계획서.docx
+
+    안전 기능:
+    - Dry Run 모드에서는 시뮬레이션만 수행
+    - keep_extension=True면 원본 확장자 자동 유지
+
+    Args:
+        path: 이름을 변경할 파일 경로
+        suggested_name: 제안된 새 이름
+        keep_extension: True면 원본 확장자 유지 (기본: True)
+
+    Returns:
+        작업 결과 메시지 (Dry Run 시 시뮬레이션 결과)
+    """
+    return rename_with_suggestion(path, suggested_name, keep_extension)
+
+
+@mcp.tool()
+def tool_group_files_into_folder(
+    directory: str, folder_name: str, file_names: list
+) -> str:
+    """
+    새 폴더를 생성하고 지정된 파일들을 해당 폴더로 이동합니다.
+    관련 파일들을 그룹으로 묶어 정리하는 데 사용합니다.
+
+    명명 규칙:
+    - 폴더명 형식: NN_폴더이름 (예: 01_ProjectFiles)
+    - 99는 Archive 용도로 예약
+
+    안전 기능:
+    - Dry Run 모드에서는 시뮬레이션만 수행
+    - 최대 디렉토리 깊이 체크
+
+    Args:
+        directory: 작업할 디렉토리 경로
+        folder_name: 생성할 폴더 이름 (예: "01_ProjectFiles")
+        file_names: 이동할 파일 이름 목록 (예: ["file1.txt", "file2.py"])
+
+    Returns:
+        작업 결과 메시지 (Dry Run 시 시뮬레이션 결과)
+    """
+    return group_files_into_folder(directory, folder_name, file_names)
 
 
 # ============================================================================
