@@ -7,8 +7,10 @@ Windows용 로컬 MCP 서버로, LLM이 파일 시스템을 정리할 수 있도
 - **디렉토리 분석**: 파일/폴더 목록 조회, 날짜 정보 추출
 - **파일 내용 확인**: 텍스트/코드 파일 스니펫 읽기 (cp949/euc-kr 인코딩 지원)
 - **이미지 메타데이터**: EXIF 정보에서 촬영 날짜 추출
-- **파일 작업**: 이동, 이름 변경, 폴더 생성
-- **일괄 처리**: 날짜 접두사 일괄 추가
+- **지능형 파일 분석**: 텍스트 분석 및 이미지 분석을 통한 파일명 제안 (LLM 연동)
+- **파일 그룹핑**: 관련 파일 분석 및 자동 그룹핑 제안
+- **파일 작업**: 이동, 이름 변경, 폴더 생성, 무작위 파일명 정리
+- **일괄 처리**: 날짜 접두사 일괄 추가, 다중 파일 그룹 폴더 이동
 - **안전 기능**: Dry Run 모드, 샌드박스 제한, 시스템 폴더 보호
 
 ## 📋 파일 정리 규칙
@@ -35,7 +37,10 @@ Windows용 로컬 MCP 서버로, LLM이 파일 시스템을 정리할 수 있도
 # 프로젝트 디렉토리로 이동
 cd C:\{your_path}\FileManageMCP
 
-# uv로 의존성 설치 및 실행
+# 의존성 설치 (requirements.txt 반영)
+uv pip install -r requirements.txt
+
+# 서버 실행
 uv run python server.py
 ```
 
@@ -118,12 +123,22 @@ Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 | `tool_get_image_metadata` | 이미지 EXIF 정보 추출 |
 | `tool_analyze_directory_structure` | 디렉토리 구조 분석 및 문제점 파악 |
 
+### 고급 분석 및 정리 도구 (New ✨)
+| 도구 | 설명 |
+|------|------|
+| `tool_find_files_needing_rename` | 무작위 파일명을 가진 파일 찾기 (정리 대상 발굴) |
+| `tool_suggest_filename_from_content` | 파일 내용(텍스트/문서) 분석용 요약 정보 반환 |
+| `tool_get_image_for_analysis` | 이미지 파일 분석용 데이터 반환 (LLM Vision 연동) |
+| `tool_analyze_file_relationships` | 파일 관계 분석 및 그룹핑 제안 |
+
 ### 액션 도구 (Dry Run 지원)
 | 도구 | 설명 |
 |------|------|
 | `tool_move_file` | 파일 이동 |
 | `tool_rename_file` | 파일/폴더 이름 변경 |
+| `tool_rename_with_suggestion` | LLM 제안 이름으로 변경 (고급) |
 | `tool_create_folder` | 새 폴더 생성 |
+| `tool_group_files_into_folder` | 관련 파일들을 새 폴더로 일괄 이동 (고급) |
 | `tool_batch_rename_with_date` | 날짜 접두사 일괄 추가 |
 
 ## 🔒 안전 기능
@@ -161,16 +176,18 @@ AI:
 3. 디렉토리 구조를 분석합니다.
    → tool_analyze_directory_structure("D:\\Downloads")
 
-4. 파일 목록을 확인합니다.
-   → tool_list_directory("D:\\Downloads")
+4. 무작위 파일명 파일들을 찾아 정리합니다.
+   → tool_find_files_needing_rename("D:\\Downloads")
+   → tool_suggest_filename_from_content(...) 또는 tool_get_image_for_analysis(...)
+   → tool_rename_with_suggestion(...)
 
-5. 정리 계획을 세우고 Dry Run으로 시뮬레이션합니다.
-   → tool_create_folder("D:\\Downloads", "01_Documents")
-   → tool_move_file("D:\\Downloads\\report.docx", "D:\\Downloads\\01_Documents")
+5. 남은 파일들을 주제별로 그룹핑합니다.
+   → tool_analyze_file_relationships("D:\\Downloads")
+   → tool_group_files_into_folder("D:\\Downloads", "01_References", ["file1.txt", "file2.pdf"])
 
 6. 결과 확인 후 실제 실행합니다.
    → tool_set_dry_run(false)
-   → (위 작업 재실행)
+   → (위 작업 실제 수행)
 ```
 
 ### 2. 날짜 접두사 일괄 추가
