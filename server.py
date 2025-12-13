@@ -321,25 +321,24 @@ def tool_suggest_filename_from_content(path: str, max_content_length: int = 1000
 
 
 @mcp.tool()
-def tool_get_image_for_analysis(path: str, max_size: int = 512) -> dict:
+def tool_get_image_for_analysis(path: str, max_size: int = 512):
     """
-    이미지 파일을 LLM Vision이 분석할 수 있도록 Base64로 인코딩하여 반환합니다.
-    MCP 프로토콜의 type: "image" 형식으로 반환됩니다.
+    이미지 파일을 LLM Vision이 분석할 수 있도록 FastMCP Image 타입으로 반환합니다.
+    Claude Vision이 실제 이미지로 인식하여 분석할 수 있습니다.
 
     지원 파일: .jpg, .jpeg, .png, .gif, .webp, .bmp
 
     사용 워크플로우:
-    1. 이 도구로 이미지 데이터 획득
-    2. Vision API로 이미지 내용 분석
-    3. 내용을 바탕으로 적절한 파일명 결정
-    4. tool_rename_with_suggestion으로 이름 변경
+    1. 이 도구로 이미지 데이터 획득 (Vision이 자동 인식)
+    2. 이미지 내용을 분석하여 적절한 파일명 결정
+    3. tool_rename_with_suggestion으로 이름 변경
 
     Args:
         path: 이미지 파일 경로
         max_size: 이미지 최대 크기 (기본: 512px, 큰 이미지는 리사이즈)
 
     Returns:
-        MCP 이미지 content (type: "image", data: base64, mimeType: ...)
+        FastMCP Image와 메타데이터 텍스트 (또는 에러 메시지)
     """
     return get_image_for_analysis(path, max_size)
 

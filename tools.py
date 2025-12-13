@@ -12,12 +12,19 @@ from datetime import datetime
 
 # 이미지 메타데이터용 (선택적)
 try:
-    from PIL import Image
+    from PIL import Image as PILImage
     from PIL.ExifTags import TAGS
 
     PIL_AVAILABLE = True
 except ImportError:
     PIL_AVAILABLE = False
+
+# FastMCP Image type for proper image content handling
+try:
+    from fastmcp.utilities.types import Image as MCPImage
+    FASTMCP_IMAGE_AVAILABLE = True
+except ImportError:
+    FASTMCP_IMAGE_AVAILABLE = False
 
 from utils import (
     validate_path,
@@ -280,7 +287,7 @@ def get_image_metadata(path: str) -> str:
         return f"[ERROR] '{target.name}'은 지원되는 이미지 형식이 아닙니다."
 
     try:
-        with Image.open(target) as img:
+        with PILImage.open(target) as img:
             result_lines = [
                 f"[IMAGE] 이미지: {target.name}",
                 f"   크기: {img.size[0]} x {img.size[1]} 픽셀",
@@ -853,61 +860,91 @@ def suggest_filename_from_content(path: str, max_content_length: int = 1000) -> 
     return "\n".join(result_lines)
 
 
-def get_image_for_analysis(path: str, max_size: int = 512) -> dict:
+def get_image_for_analysis(path: str, max_size: int = 512):
     """
-    이미지 파일을 LLM Vision API가 분석할 수 있도록 Base64로 인코딩하여 반환합니다.
-    MCP 프로토콜에 맞게 type: "image" 형식으로 반환합니다.
+    이미지 파일을 LLM Vision API가 분석할 수 있도록 FastMCP Image 타입으로 반환합니다.
+    Claude Vision이 실제 이미지로 인식할 수 있는 형식입니다.
 
     Args:
         path: 이미지 파일 경로
         max_size: 이미지 최대 크기 (기본: 512px, 리사이즈됨)
 
     Returns:
-        MCP 이미지 content 형식의 딕셔너리 또는 에러 메시지
+        FastMCP Image와 메타데이터 텍스트를 포함한 리스트,
+        또는 에러 메시지 문자열
     """
+    if not FASTMCP_IMAGE_AVAILABLE:
+        return "[ERROR] FastMCP Image 타입을 사용할 수 없습니다. fastmcp 라이브러리 확인이 필요합니다."
+
     validation = validate_path(path, must_exist=True)
     if not validation.is_valid:
-        return {"type": "text", "text": f"[ERROR] {validation.error_message}"}
+        return f"[ERROR] {validation.error_message}"
 
     target = validation.resolved_path
 
     if not target.is_file():
-        return {"type": "text", "text": f"[ERROR] '{path}'는 파일이 아닙니다."}
+        return f"[ERROR] '{path}'는 파일이 아닙니다."
 
     ext = target.suffix.lower()
     image_exts = get_image_extensions()
 
     if ext not in image_exts:
-        return {
-            "type": "text",
-            "text": f"[ERROR] '{ext}' 확장자는 이미지가 아닙니다. 지원 확장자: {', '.join(sorted(image_exts))}",
-        }
+        return f"[ERROR] '{ext}' 확장자는 이미지가 아닙니다. 지원 확장자: {', '.join(sorted(image_exts))}"
 
     # 이미지 정보 수집
     dates = get_file_dates(target)
     size = get_file_size_str(target.stat().st_size)
     is_random = is_random_filename(target.name)
 
-    # Base64 인코딩
-    base64_data, mime_type, success = encode_image_to_base64(target, max_size)
+    # 이미지 리사이즈가 필요한 경우 처리
+    try:
+        if PIL_AVAILABLE:
+            from io import BytesIO
+            with PILImage.open(target) as img:
+                # 리사이즈 필요 여부 확인
+                if max(img.size) > max_size:
+                    ratio = max_size / max(img.size)
+                    new_size = (int(img.size[0] * ratio), int(img.size[1] * ratio))
+                    img_resized = img.resize(new_size, PILImage.Resampling.LANCZOS)
+                    
+                    # RGBA를 RGB로 변환 (JPEG 저장을 위해)
+                    if img_resized.mode == 'RGBA':
+                        img_resized = img_resized.convert('RGB')
+                    
+                    # 바이트로 저장
+                    buffer = BytesIO()
+                    save_format = 'JPEG' if ext in ['.jpg', '.jpeg'] else 'PNG'
+                    img_resized.save(buffer, format=save_format, quality=85)
+                    image_bytes = buffer.getvalue()
+                    
+                    # format 결정
+                    img_format = 'jpeg' if save_format == 'JPEG' else 'png'
+                    mcp_image = MCPImage(data=image_bytes, format=img_format)
+                else:
+                    # 리사이즈 불필요 - 파일 경로 직접 사용
+                    mcp_image = MCPImage(path=str(target))
+        else:
+            # PIL 없으면 파일 경로 직접 사용
+            mcp_image = MCPImage(path=str(target))
+    except Exception as e:
+        return f"[ERROR] 이미지 처리 오류: {str(e)}"
 
-    if not success:
-        return {"type": "text", "text": base64_data}  # 에러 메시지
+    # 메타데이터 텍스트 생성
+    metadata_text = (
+        f"[IMAGE INFO]\n"
+        f"파일명: {target.name}\n"
+        f"경로: {target}\n"
+        f"크기: {size}\n"
+        f"수정일: {dates['modified_iso']}\n"
+        f"무작위 파일명 여부: {'예' if is_random else '아니오'}\n\n"
+        f"[INSTRUCTION]\n"
+        f"이 이미지의 내용을 분석하고, 적절한 파일명을 제안해주세요.\n"
+        f"파일명 형식: YYMMDD_설명.{ext[1:]} (예: {dates['modified_str']}_설명{ext})"
+    )
 
-    # MCP 이미지 content 형식으로 반환
-    return {
-        "type": "image",
-        "data": base64_data,
-        "mimeType": mime_type,
-        "metadata": {
-            "filename": target.name,
-            "path": str(target),
-            "size": size,
-            "modified": dates["modified_iso"],
-            "is_random_name": is_random,
-            "instruction": "이 이미지의 내용을 분석하고, 적절한 파일명을 제안해주세요. 형식: YYMMDD_설명.확장자",
-        },
-    }
+    # FastMCP Image와 메타데이터 텍스트를 리스트로 반환
+    # FastMCP가 자동으로 ImageContent와 TextContent로 변환
+    return [mcp_image, metadata_text]
 
 
 def analyze_file_relationships(directory: str) -> str:
