@@ -29,50 +29,9 @@ Windows용 로컬 MCP 서버로, LLM이 파일 시스템을 정리할 수 있도
 ### 요구 사항
 - Windows 10/11
 - Python 3.13+
-- `uv` (권장) 또는 `pip`
+- uv
 
-### 방법 1: uv 사용 (권장)
-
-```bash
-# 프로젝트 디렉토리로 이동
-cd C:\{your_path}\FileManageMCP
-
-# 의존성 설치 (requirements.txt 반영)
-uv pip install -r requirements.txt
-
-# 서버 실행
-uv run python server.py
-```
-
-### 방법 2: pip 사용
-
-```bash
-# 가상환경 생성 (선택사항)
-python -m venv venv
-venv\Scripts\activate
-
-# 의존성 설치
-pip install -r requirements.txt
-
-# 서버 실행
-python server.py
-```
-
-## ⚙️ Cursor/Claude Desktop 설정
-
-### Cursor 설정 (`settings.json`)
-
-```json
-{
-  "mcpServers": {
-    "file-organization-agent": {
-      "command": "uv",
-      "args": ["run", "--directory", "{your_path}\\FileManageMCP", "python", "server.py"]
-    } 
-  }
-}
-
-```
+## ⚙️ Claude Desktop 설정
 
 ### Claude Desktop 설정 (`claude_desktop_config.json`)
 
@@ -83,24 +42,13 @@ Windows: `%APPDATA%\Claude\claude_desktop_config.json`
   "mcpServers": {
     "file-organization-agent": {
       "command": "uv",
-      "args": ["run", "python", "server.py"],
-      "cwd": "C:\\{your_path}\\FileManageMCP"
-    }
-  }
-}
-```
-
-또는 Python 직접 실행:
-
-```json
-{
-  "mcpServers": {
-    "file-organization-agent": {
-      "command": "python",
-      "args": ["C:\\{your_path}\\FileManageMCP\\server.py"],
-      "env": {
-        "MCP_FILE_AGENT_ROOT": "D:\\MyDocuments"
-      }
+      "args": [
+        "--directory",
+        "{your_path}/FileManageMCP",
+        "run",
+        "python",
+        "server.py"
+      ]
     }
   }
 }
