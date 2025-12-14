@@ -71,7 +71,7 @@ Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 | `tool_get_image_metadata` | 이미지 EXIF 정보 추출 |
 | `tool_analyze_directory_structure` | 디렉토리 구조 분석 및 문제점 파악 |
 
-### 고급 분석 및 정리 도구 (New ✨)
+### 고급 분석 및 정리 도구
 | 도구 | 설명 |
 |------|------|
 | `tool_find_files_needing_rename` | 의미를 알 수 없는 파일명을 가진 파일 찾기 (정리 대상 발굴) |
@@ -109,7 +109,7 @@ Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ## 📖 사용 예시
 
-### 1. 기본 워크플로우
+### 기본 워크플로우
 
 ```
 User: D:\Downloads 폴더를 정리해줘
@@ -138,27 +138,11 @@ AI:
    → (위 작업 실제 수행)
 ```
 
-### 2. 날짜 접두사 일괄 추가
-
-```
-User: 모든 파일에 날짜 접두사를 붙여줘
-
-AI:
-1. 대상 확인
-   → tool_list_directory("D:\\Downloads")
-
-2. Dry Run 시뮬레이션
-   → tool_batch_rename_with_date("D:\\Downloads", use_modified=true)
-
-3. 확인 후 실제 실행
-   → tool_set_dry_run(false)
-   → tool_batch_rename_with_date("D:\\Downloads", use_modified=true)
-```
 
 ## 📁 프로젝트 구조
 
 ```
-03_FileManageMCP/
+FileManageMCP/
 ├── server.py          # MCP 서버 진입점 (FastMCP)
 ├── tools.py           # MCP 도구 함수 구현
 ├── utils.py           # 유틸리티 (경로 검증, 인코딩 처리)

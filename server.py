@@ -462,6 +462,11 @@ def get_organization_rules() -> str:
    - 'Final', '최종', '진짜최종' 금지!
    - 예: `251202_프로젝트계획서_v1.0.docx`
 
+## 지능형 정리 (AI 활용)
+
+- **의미 불명 파일**: `asd.txt`, `temp1.py` 등 의미를 알 수 없는 파일은 `tool_suggest_filename_from_content`를 사용하여 내용을 분석하고 이름을 제안받을 수 있음.
+- **이미지 파일**: `IMG_1234.JPG` 등은 `tool_get_image_for_analysis`를 사용하여 이미지 내용을 분석하고 이름을 제안받을 수 있음.
+
 ## 금지 사항
 
 - 시스템 폴더 접근 금지 (Windows, Program Files 등)
@@ -481,27 +486,31 @@ def get_workflow_guide() -> str:
 2. `tool_get_status`로 Dry Run 활성화 확인
 3. `tool_analyze_directory_structure`로 현황 파악
 
-## 2단계: 분석 (Dry Run 모드)
-1. `tool_list_directory`로 대상 폴더 탐색
-2. 정리가 필요한 항목 파악:
-   - 번호 없는 폴더
-   - 날짜 없는 파일
-   - 깊이 초과 구조
+## 2단계: 지능형 분석 및 정리
+1. **의미 불명 파일 찾기**:
+   - `tool_find_files_needing_rename`으로 정리 대상 발굴
+2. **내용 기반 분석**:
+   - 텍스트/문서: `tool_suggest_filename_from_content`
+   - 이미지: `tool_get_image_for_analysis`
+3. **이름 변경 실행**:
+   - `tool_rename_with_suggestion` 사용
 
-## 3단계: 계획 수립
-1. 필요한 폴더 구조 설계 (5단계 이내)
-2. 파일 이동/이름변경 계획
-3. `tool_move_file`, `tool_rename_file` 로 Dry Run 시뮬레이션
+## 3단계: 그룹핑 및 구조화
+1. **관계 분석**:
+   - `tool_analyze_file_relationships`로 연관 파일 파악
+2. **그룹핑 실행**:
+   - `tool_group_files_into_folder`로 주제별 폴더 이동
+3. **일괄 날짜 처리**:
+   - 필요 시 `tool_batch_rename_with_date` 실행
 
-## 4단계: 실행
-1. 사용자 확인 후 `tool_set_dry_run(false)` 로 실제 모드 전환
-2. 계획된 작업 실행
-3. 결과 확인
+## 4단계: 실행 (Dry Run 해제)
+1. **최종 확인**: 사용자에게 계획된 작업 승인 요청
+2. **모드 전환**: `tool_set_dry_run(false)`
+3. **작업 수행**: 계획된 도구 호출 실행
 
 ## 5단계: 검증
 1. `tool_analyze_directory_structure`로 정리 결과 확인
-2. 문제 있으면 추가 정리
-3. 완료 후 `tool_set_dry_run(true)`로 안전 모드 복귀
+2. 완료 후 `tool_set_dry_run(true)`로 안전 모드 복귀
 """
 
 
