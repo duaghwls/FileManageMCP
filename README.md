@@ -1,4 +1,4 @@
-# 📂 File Organization MCP Server
+# 📂 File Manage MCP Server
 
 Windows용 로컬 MCP 서버로, LLM이 파일 시스템을 정리할 수 있도록 도구를 제공합니다.
 
