@@ -580,15 +580,15 @@ def analyze_filename_patterns(filenames: list[str]) -> dict:
     return result
 
 
-def is_random_filename(filename: str) -> bool:
+def is_meaningless_filename(filename: str) -> bool:
     """
-    파일명이 무작위 문자열인지 판단합니다.
+    파일명이 의미를 알 수 없는 문자열인지 판단합니다.
     
     Args:
         filename: 확인할 파일명 (확장자 제외)
         
     Returns:
-        True if likely random, False otherwise
+        True if likely meaningless, False otherwise
     """
     stem = Path(filename).stem
     
@@ -596,16 +596,16 @@ def is_random_filename(filename: str) -> bool:
     if re.match(r'^\d{6}_', stem):
         return False
     
-    # 너무 짧은 이름은 무작위로 간주
+    # 너무 짧은 이름은 의미를 알 수 없는로 간주
     if len(stem) <= 3:
         return True
     
     # 알파벳+숫자만으로 구성된 경우 (단어 구분 없음)
     if re.match(r'^[a-zA-Z0-9]+$', stem):
-        # 연속된 숫자가 많으면 무작위일 가능성
+        # 연속된 숫자가 많으면 의미를 알 수 없는일 가능성
         if len(re.findall(r'\d', stem)) > len(stem) * 0.5:
             return True
-        # 모음이 거의 없으면 무작위일 가능성 (자연어가 아님)
+        # 모음이 거의 없으면 의미를 알 수 없는일 가능성 (자연어가 아님)
         vowels = len(re.findall(r'[aeiouAEIOU]', stem))
         if vowels < len(stem) * 0.15:
             return True

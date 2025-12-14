@@ -281,7 +281,7 @@ def tool_batch_rename_with_date(directory: str, use_modified: bool = True) -> st
 @mcp.tool()
 def tool_find_files_needing_rename(directory: str) -> str:
     """
-    디렉토리 내에서 이름 변경이 필요한 파일들(무작위 파일명)을 찾습니다.
+    디렉토리 내에서 이름 변경이 필요한 파일들(의미를 알 수 없는 파일명)을 찾습니다.
     분석 가능한 텍스트/이미지 파일만 필터링하여 반환합니다.
 
     이 도구로 먼저 대상 파일을 파악한 후:
@@ -353,7 +353,7 @@ def tool_analyze_file_relationships(directory: str) -> str:
     - 공통 접두사를 가진 파일들
     - 공통 키워드
     - 같은 날짜에 수정된 파일들
-    - 무작위 파일명 목록
+    - 의미를 알 수 없는 파일명 목록
 
     이 분석 결과를 바탕으로 tool_group_files_into_folder로 파일들을 정리할 수 있습니다.
 

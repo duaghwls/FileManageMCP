@@ -45,7 +45,7 @@ from utils import (
     get_readable_extensions,
     get_image_extensions,
     analyze_filename_patterns,
-    is_random_filename,
+    is_meaningless_filename,
 )
 
 
@@ -806,7 +806,7 @@ def suggest_filename_from_content(path: str, max_content_length: int = 1000) -> 
     # 파일 정보 수집
     dates = get_file_dates(target)
     size = get_file_size_str(target.stat().st_size)
-    is_random = is_random_filename(target.name)
+    is_meaningless = is_meaningless_filename(target.name)
 
     result_lines = [
         f"[ANALYZE] 파일 분석: {target.name}",
@@ -814,7 +814,7 @@ def suggest_filename_from_content(path: str, max_content_length: int = 1000) -> 
         f"   확장자: {ext}",
         f"   크기: {size}",
         f"   수정일: {dates['modified_iso']}",
-        f"   무작위 파일명 여부: {'예 (이름 변경 권장)' if is_random else '아니오'}",
+        f"   의미를 알 수 없는 파일명 여부: {'예 (이름 변경 권장)' if is_meaningless else '아니오'}",
         "",
     ]
 
@@ -894,7 +894,7 @@ def get_image_for_analysis(path: str, max_size: int = 512):
     # 이미지 정보 수집
     dates = get_file_dates(target)
     size = get_file_size_str(target.stat().st_size)
-    is_random = is_random_filename(target.name)
+    is_meaningless = is_meaningless_filename(target.name)
 
     # 이미지 리사이즈가 필요한 경우 처리
     try:
@@ -936,7 +936,7 @@ def get_image_for_analysis(path: str, max_size: int = 512):
         f"경로: {target}\n"
         f"크기: {size}\n"
         f"수정일: {dates['modified_iso']}\n"
-        f"무작위 파일명 여부: {'예' if is_random else '아니오'}\n\n"
+        f"의미를 알 수 없는 파일명 여부: {'예' if is_meaningless else '아니오'}\n\n"
         f"[INSTRUCTION]\n"
         f"이 이미지의 내용을 분석하고, 적절한 파일명을 제안해주세요.\n"
         f"파일명 형식: YYMMDD_설명.{ext[1:]} (예: {dates['modified_str']}_설명{ext})"
@@ -984,8 +984,8 @@ def analyze_file_relationships(directory: str) -> str:
     filenames = [f.name for f in files]
     patterns = analyze_filename_patterns(filenames)
 
-    # 무작위 파일명 파일 찾기
-    random_files = [f.name for f in files if is_random_filename(f.name)]
+    # 의미를 알 수 없는 파일명 파일 찾기
+    meaningless_files = [f.name for f in files if is_meaningless_filename(f.name)]
 
     # 파일 정보 수집 (날짜별 그룹핑용)
     date_groups = {}
@@ -1038,20 +1038,20 @@ def analyze_file_relationships(directory: str) -> str:
                 result_lines.append(f"           ... 외 {len(date_files) - 3}개")
         result_lines.append("")
 
-    # 무작위 파일명
-    if random_files:
-        result_lines.append(f"[RANDOM_NAMES] 무작위 파일명 ({len(random_files)}개, 이름 변경 권장):")
-        for rf in random_files[:5]:
-            result_lines.append(f"   • {rf}")
-        if len(random_files) > 5:
-            result_lines.append(f"   ... 외 {len(random_files) - 5}개")
+    # 의미를 알 수 없는 파일명
+    if meaningless_files:
+        result_lines.append(f"[meaningless_NAMES] 의미를 알 수 없는 파일명 ({len(meaningless_files)}개, 이름 변경 권장):")
+        for mf in meaningless_files[:5]:
+            result_lines.append(f"   • {mf}")
+        if len(meaningless_files) > 5:
+            result_lines.append(f"   ... 외 {len(meaningless_files) - 5}개")
         result_lines.append("")
 
     result_lines.extend([
         "[INSTRUCTION]",
         "위 분석 결과를 바탕으로:",
         "1. 관련 파일들을 묶을 새 폴더를 제안해주세요 (형식: NN_폴더명)",
-        "2. 무작위 파일명을 가진 파일들의 새 이름을 제안해주세요",
+        "2. 의미를 알 수 없는 파일명을 가진 파일들의 새 이름을 제안해주세요",
         "3. group_files_into_folder 도구로 파일들을 정리할 수 있습니다",
     ])
 
@@ -1211,7 +1211,7 @@ def group_files_into_folder(
 
 def find_files_needing_rename(directory: str) -> str:
     """
-    디렉토리 내에서 이름 변경이 필요한 파일들(무작위 파일명)을 찾아 목록을 반환합니다.
+    디렉토리 내에서 이름 변경이 필요한 파일들(의미를 알 수 없는 파일명)을 찾아 목록을 반환합니다.
 
     Args:
         directory: 탐색할 디렉토리 경로
@@ -1243,31 +1243,31 @@ def find_files_needing_rename(directory: str) -> str:
     image_exts = get_image_extensions()
     analyzable_exts = readable_exts | image_exts
 
-    # 무작위 파일명을 가진 파일 찾기
-    random_files = []
+    # 의미를 알 수 없는 파일명을 가진 파일 찾기
+    meaningless_files = []
     for f in files:
-        if is_random_filename(f.name):
+        if is_meaningless_filename(f.name):
             ext = f.suffix.lower()
             if ext in analyzable_exts:
                 file_type = "image" if ext in image_exts else "text"
-                random_files.append({
+                meaningless_files.append({
                     "name": f.name,
                     "path": str(f),
                     "type": file_type,
                     "extension": ext,
                 })
 
-    if not random_files:
+    if not meaningless_files:
         return f"[OK] '{directory}'에 이름 변경이 필요한 분석 가능 파일이 없습니다."
 
     result_lines = [
-        f"[FOUND] 이름 변경이 필요한 파일 ({len(random_files)}개):",
+        f"[FOUND] 이름 변경이 필요한 파일 ({len(meaningless_files)}개):",
         "",
     ]
 
     # 타입별 분리
-    text_files = [f for f in random_files if f["type"] == "text"]
-    image_files = [f for f in random_files if f["type"] == "image"]
+    text_files = [f for f in meaningless_files if f["type"] == "text"]
+    image_files = [f for f in meaningless_files if f["type"] == "image"]
 
     if text_files:
         result_lines.append("[TEXT] 텍스트/문서 파일 (suggest_filename_from_content 사용):")

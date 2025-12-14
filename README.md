@@ -9,7 +9,7 @@ Windows용 로컬 MCP 서버로, LLM이 파일 시스템을 정리할 수 있도
 - **이미지 메타데이터**: EXIF 정보에서 촬영 날짜 추출
 - **지능형 파일 분석**: 텍스트 분석 및 이미지 분석을 통한 파일명 제안 (LLM 연동)
 - **파일 그룹핑**: 관련 파일 분석 및 자동 그룹핑 제안
-- **파일 작업**: 이동, 이름 변경, 폴더 생성, 무작위 파일명 정리
+- **파일 작업**: 이동, 이름 변경, 폴더 생성, 의미를 알 수 없는 파일명 정리
 - **일괄 처리**: 날짜 접두사 일괄 추가, 다중 파일 그룹 폴더 이동
 - **안전 기능**: Dry Run 모드, 샌드박스 제한, 시스템 폴더 보호
 
@@ -74,7 +74,7 @@ Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 ### 고급 분석 및 정리 도구 (New ✨)
 | 도구 | 설명 |
 |------|------|
-| `tool_find_files_needing_rename` | 무작위 파일명을 가진 파일 찾기 (정리 대상 발굴) |
+| `tool_find_files_needing_rename` | 의미를 알 수 없는 파일명을 가진 파일 찾기 (정리 대상 발굴) |
 | `tool_suggest_filename_from_content` | 파일 내용(텍스트/문서) 분석용 요약 정보 반환 |
 | `tool_get_image_for_analysis` | 이미지 파일 분석용 데이터 반환 (LLM Vision 연동) |
 | `tool_analyze_file_relationships` | 파일 관계 분석 및 그룹핑 제안 |
@@ -124,7 +124,7 @@ AI:
 3. 디렉토리 구조를 분석합니다.
    → tool_analyze_directory_structure("D:\\Downloads")
 
-4. 무작위 파일명 파일들을 찾아 정리합니다.
+4. 의미를 알 수 없는 파일명 파일들을 찾아 정리합니다.
    → tool_find_files_needing_rename("D:\\Downloads")
    → tool_suggest_filename_from_content(...) 또는 tool_get_image_for_analysis(...)
    → tool_rename_with_suggestion(...)
