@@ -166,6 +166,10 @@ AI:
 └── README.md          # 이 문서
 ```
 
-
-## 📸 실행 예시
+## �📸 실행 예시
 ![FileManageMCP Result](FileManageMCP_Result.jpg)
+
+## � License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
