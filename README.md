@@ -31,6 +31,12 @@ Windows용 로컬 MCP 서버로, LLM이 파일 시스템을 정리할 수 있도
 - Python 3.13+
 - uv
 
+### uv dependency 설치
+   ```bash
+   uv pip install -r requirements.txt
+   ```
+
+
 ## ⚙️ Claude Desktop 설정
 
 ### Claude Desktop 설정 (`claude_desktop_config.json`)
