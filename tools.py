@@ -855,6 +855,7 @@ def suggest_filename_from_content(path: str, max_content_length: int = 1000) -> 
         "",
         "[INSTRUCTION] 위 내용을 바탕으로 적절한 파일명을 제안해주세요.",
         "파일명 형식: YYMMDD_설명적인이름.확장자 (예: 241213_회의록.txt)",
+        "명명 언어: 파일 내용이 한글 위주면 한글로, 영어 위주면 영어로 이름을 지어주세요.",
     ])
 
     return "\n".join(result_lines)
@@ -939,6 +940,7 @@ def get_image_for_analysis(path: str, max_size: int = 512):
         f"의미를 알 수 없는 파일명 여부: {'예' if is_meaningless else '아니오'}\n\n"
         f"[INSTRUCTION]\n"
         f"이 이미지의 내용을 분석하고, 적절한 파일명을 제안해주세요.\n"
+        f"명명 언어: 이미지 내 텍스트나 내용이 한글 위주면 한글로, 영어 위주면 영어로 이름을 지어주세요.\n"
         f"파일명 형식: YYMMDD_설명.{ext[1:]} (예: {dates['modified_str']}_설명{ext})"
     )
 
